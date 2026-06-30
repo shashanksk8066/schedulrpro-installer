@@ -21,7 +21,7 @@ supervisor_install() {
     
     log_info "Configuring Supervisor workers..."
     
-    local template_dir="$(dirname "$0")/../../templates"
+    local template_dir="${INSTALLER_DIR}/templates"
     local configs=("supervisor-instagram.conf" "supervisor-facebook.conf" "supervisor-youtube.conf" "supervisor-default.conf" "supervisor-scheduler.conf")
     
     for conf in "${configs[@]}"; do

@@ -49,7 +49,7 @@ laravel_install() {
     
     # 4. Generate .env
     log_info "Generating production .env file..."
-    local env_template="$(dirname "$0")/../../templates/.env.template"
+    local env_template="${INSTALLER_DIR}/templates/.env.template"
     if [[ ! -f "$env_template" ]]; then
         log_error "Environment template not found at $env_template"
         exit 3

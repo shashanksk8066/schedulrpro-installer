@@ -21,7 +21,7 @@ nginx_install() {
     
     log_info "Configuring Nginx for domain: ${USER_DOMAIN}"
     
-    local template_file="$(dirname "$0")/../../templates/nginx.conf"
+    local template_file="${INSTALLER_DIR}/templates/nginx.conf"
     local site_conf="${NGINX_SITES_AVAILABLE}/${USER_DOMAIN}.conf"
     
     if [[ ! -f "$template_file" ]]; then
