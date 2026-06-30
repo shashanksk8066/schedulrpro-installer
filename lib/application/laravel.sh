@@ -11,35 +11,101 @@ laravel_check() {
     is_step_completed "laravel"
 }
 
-laravel_install() {
-    log_step "Deploying Laravel Application"
+# ------------------------------------------------------------------------------
+# Clone Logic
+# ------------------------------------------------------------------------------
+clone_repository() {
+    log_info "Preparing to clone application repository..."
     
-    # 1. Clone Repository
-    log_info "Cloning application repository (Tag: ${RELEASE_TAG})..."
-    
-    if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-        log_error "GitHub Personal Access Token is empty. Cannot clone private repository."
+    # Validate required variables
+    if [[ -z "${REPO_URL:-}" ]] || [[ -z "${RELEASE_TAG:-}" ]] || [[ -z "${GITHUB_USERNAME:-}" ]] || [[ -z "${GITHUB_TOKEN:-}" ]] || [[ -z "${APP_DIR:-}" ]]; then
+        log_error "Missing required configuration variables for cloning."
         exit 1
     fi
     
-    # Extract scheme/host/path from REPO_URL to insert token
-    # e.g., https://github.com/user/repo.git -> https://user:TOKEN@github.com/user/repo.git
-    local auth_repo_url
-    auth_repo_url=$(echo "$REPO_URL" | sed -E "s|(https?://)|\1git:${GITHUB_TOKEN}@|")
+    # Verify APP_DIR
+    if [[ -d "$APP_DIR" ]]; then
+        log_error "Directory ${APP_DIR} already exists. Refusing to overwrite existing installation."
+        exit 1
+    fi
     
-    # Clone specific tag with depth 1
-    if git clone --branch "$RELEASE_TAG" --depth=1 "$auth_repo_url" "$APP_DIR" >/dev/null 2>&1; then
+    # Construct authenticated URL
+    local clean_url
+    clean_url=$(echo "$REPO_URL" | sed -E 's|^https?://||')
+    local auth_repo_url="https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@${clean_url}"
+    
+    # Debug Mode Output
+    if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
+        log_info "--- Debug Info ---"
+        log_info "Repository URL: https://****:****@${clean_url}"
+        log_info "Clone Mode: ${CLONE_MODE:-tag}"
+        if [[ "${CLONE_MODE:-tag}" == "tag" ]]; then
+            log_info "Release Tag: ${RELEASE_TAG}"
+        else
+            log_info "Default Branch: ${DEFAULT_BRANCH:-main}"
+        fi
+        log_info "Target Directory: ${APP_DIR}"
+        log_info "------------------"
+    fi
+    
+    # Validate Release Tag
+    if [[ "${CLONE_MODE:-tag}" == "tag" ]]; then
+        log_info "Verifying release tag ${RELEASE_TAG}..."
+        if ! git ls-remote --tags "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@${clean_url}" "$RELEASE_TAG" 2>/dev/null | grep -q "$RELEASE_TAG"; then
+            log_error "Configured release tag \"$RELEASE_TAG\" does not exist."
+            log_info "Available tags:"
+            git ls-remote --tags "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@${clean_url}" 2>/dev/null | awk -F'/' '{print $3}' | grep -v "\^{}" || true
+            unset GITHUB_TOKEN
+            exit 2
+        fi
+    fi
+    
+    # Build clone command
+    local clone_cmd=(git clone --depth=1)
+    if [[ "${CLONE_MODE:-tag}" == "tag" ]]; then
+        clone_cmd+=(--branch "$RELEASE_TAG")
+    else
+        clone_cmd+=(--branch "${DEFAULT_BRANCH:-main}")
+    fi
+    clone_cmd+=("$auth_repo_url" "$APP_DIR")
+    
+    # Execute clone and capture stderr
+    local tmp_git_log
+    tmp_git_log=$(mktemp)
+    
+    log_info "Cloning repository..."
+    if "${clone_cmd[@]}" >/dev/null 2>"$tmp_git_log"; then
         log_success "Repository cloned successfully."
     else
-        log_error "GitHub authentication failed or repository not found."
-        log_error "Please verify that the supplied Personal Access Token is valid and has read access to the repository."
+        log_error "GitHub cloning failed."
+        log_error "Git output:"
+        
+        # Redact secrets
+        local redacted_log
+        redacted_log=$(sed -E "s|${GITHUB_TOKEN}|****|g" "$tmp_git_log" | sed -E "s|${GITHUB_USERNAME}|****|g")
+        echo -e "${COLOR_WARN}${redacted_log}${COLOR_RESET}"
+        
+        # Ensure log output reaches installer log safely
+        echo "$redacted_log" >> "$INSTALLER_LOG_FILE"
+        
+        rm -f "$tmp_git_log"
+        unset GITHUB_TOKEN
         exit 2
     fi
     
-    # 2. Secure Token & Remove Git Metadata
+    rm -f "$tmp_git_log"
+    
+    # Destroy Token & Remove Git Metadata
     unset GITHUB_TOKEN
     log_info "Removing Git metadata..."
     rm -rf "${APP_DIR}/.git"
+}
+
+laravel_install() {
+    log_step "Deploying Laravel Application"
+    
+    clone_repository
+
     
     # 3. Composer Install
     log_info "Running composer install..."

@@ -16,7 +16,11 @@ export APP_VERSION="1.0.0"
 # Source Control (GitHub)
 # ------------------------------------------------------------------------------
 export REPO_URL="https://github.com/shashanksk8066/schedulrpro-software-v1.git"
-export RELEASE_TAG="v1.0.0" # Always clone tagged releases
+export GITHUB_USERNAME="shashanksk8066"
+export RELEASE_TAG="v1.0.0"
+export CLONE_MODE="tag" # 'tag' or 'branch'
+export DEFAULT_BRANCH="main"
+export DEBUG_MODE=true
 
 # ------------------------------------------------------------------------------
 # Deployment Directories
