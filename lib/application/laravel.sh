@@ -18,7 +18,7 @@ clone_repository() {
     log_info "Preparing to clone application repository..."
     
     # Validate required variables
-    if [[ -z "${REPO_URL:-}" ]] || [[ -z "${RELEASE_TAG:-}" ]] || [[ -z "${GITHUB_USERNAME:-}" ]] || [[ -z "${GITHUB_TOKEN:-}" ]] || [[ -z "${APP_DIR:-}" ]]; then
+    if [[ -z "${REPO_URL:-}" ]] || [[ -z "${GITHUB_USERNAME:-}" ]] || [[ -z "${GITHUB_TOKEN:-}" ]] || [[ -z "${APP_DIR:-}" ]] || [[ -z "${DEFAULT_BRANCH:-}" ]]; then
         log_error "Missing required configuration variables for cloning."
         exit 1
     fi
@@ -38,42 +38,20 @@ clone_repository() {
     if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
         log_info "--- Debug Info ---"
         log_info "Repository URL: https://****:****@${clean_url}"
-        log_info "Clone Mode: ${CLONE_MODE:-tag}"
-        if [[ "${CLONE_MODE:-tag}" == "tag" ]]; then
-            log_info "Release Tag: ${RELEASE_TAG}"
-        else
-            log_info "Default Branch: ${DEFAULT_BRANCH:-main}"
-        fi
+        log_info "Default Branch: ${DEFAULT_BRANCH}"
         log_info "Target Directory: ${APP_DIR}"
+        log_info "Application Version: ${APP_VERSION:-unknown}"
         log_info "------------------"
     fi
     
-    # Validate Release Tag
-    if [[ "${CLONE_MODE:-tag}" == "tag" ]]; then
-        log_info "Verifying release tag ${RELEASE_TAG}..."
-        if ! git ls-remote --tags "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@${clean_url}" "$RELEASE_TAG" 2>/dev/null | grep -q "$RELEASE_TAG"; then
-            log_error "Configured release tag \"$RELEASE_TAG\" does not exist."
-            log_info "Available tags:"
-            git ls-remote --tags "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@${clean_url}" 2>/dev/null | awk -F'/' '{print $3}' | grep -v "\^{}" || true
-            unset GITHUB_TOKEN
-            exit 2
-        fi
-    fi
-    
     # Build clone command
-    local clone_cmd=(git clone --depth=1)
-    if [[ "${CLONE_MODE:-tag}" == "tag" ]]; then
-        clone_cmd+=(--branch "$RELEASE_TAG")
-    else
-        clone_cmd+=(--branch "${DEFAULT_BRANCH:-main}")
-    fi
-    clone_cmd+=("$auth_repo_url" "$APP_DIR")
+    local clone_cmd=(git clone --depth=1 --branch "$DEFAULT_BRANCH" "$auth_repo_url" "$APP_DIR")
     
     # Execute clone and capture stderr
     local tmp_git_log
     tmp_git_log=$(mktemp)
     
-    log_info "Cloning repository..."
+    log_info "Cloning repository (Branch: ${DEFAULT_BRANCH})..."
     if "${clone_cmd[@]}" >/dev/null 2>"$tmp_git_log"; then
         log_success "Repository cloned successfully."
     else

@@ -92,6 +92,24 @@ Hooks (Post)
 Installation Complete
 ```
 
+## Development Workflow
+
+The installer always installs the latest code from the configured branch (e.g., `main`). There is no Git Tag management required.
+
+```text
+Developer
+   │
+   ├──> git add .
+   ├──> git commit -m "Some Fix"
+   └──> git push origin main
+              │
+              ▼
+           Installer
+              │
+              ├──> Clones latest main
+              └──> Installs and Deploys
+```
+
 ## How to Run
 
 1. Clone or copy this installer directory to the target Ubuntu server.

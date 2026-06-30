@@ -17,8 +17,6 @@ export APP_VERSION="1.0.0"
 # ------------------------------------------------------------------------------
 export REPO_URL="https://github.com/shashanksk8066/schedulrpro-software-v1.git"
 export GITHUB_USERNAME="shashanksk8066"
-export RELEASE_TAG="v1.0.0"
-export CLONE_MODE="tag" # 'tag' or 'branch'
 export DEFAULT_BRANCH="main"
 export DEBUG_MODE=true
 
