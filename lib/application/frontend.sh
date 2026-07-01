@@ -23,13 +23,13 @@ frontend_install() {
     log_info "Frontend project detected. Installing NPM dependencies..."
     cd "$APP_DIR" || exit 3
     
-    if ! sudo -u www-data npm install --no-audit --no-fund > /dev/null 2>&1; then
+    if ! npm install --no-audit --no-fund > /dev/null 2>&1; then
         log_error "NPM install failed."
         exit 2
     fi
     
     log_info "Compiling production assets (Vite)..."
-    if ! sudo -u www-data npm run build > /dev/null 2>&1; then
+    if ! npm run build > /dev/null 2>&1; then
         log_error "Frontend build (npm run build) failed."
         exit 2
     fi
