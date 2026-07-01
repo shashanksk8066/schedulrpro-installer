@@ -76,7 +76,7 @@ verification_install() {
     log_info "Verifying Configuration Limits..."
     
     local php_upload
-    php_upload=$(php -i 2>/dev/null | grep -i "^upload_max_filesize" | awk '{print $3}')
+    php_upload=$(php -i 2>/dev/null | grep -i "^upload_max_filesize" | head -n1 | awk '{print $3}')
     if [[ "$php_upload" == "$UPLOAD_MAX_FILESIZE" ]]; then
         log_success "PHP upload_max_filesize = $php_upload"
     else
@@ -85,7 +85,7 @@ verification_install() {
     fi
     
     local php_post
-    php_post=$(php -i 2>/dev/null | grep -i "^post_max_size" | awk '{print $3}')
+    php_post=$(php -i 2>/dev/null | grep -i "^post_max_size" | head -n1 | awk '{print $3}')
     if [[ "$php_post" == "$POST_MAX_SIZE" ]]; then
         log_success "PHP post_max_size = $php_post"
     else
