@@ -21,6 +21,16 @@ export DEFAULT_BRANCH="main"
 export DEBUG_MODE=true
 
 # ------------------------------------------------------------------------------
+# PHP & Nginx Configuration Limits
+# ------------------------------------------------------------------------------
+export UPLOAD_MAX_FILESIZE="512M"
+export POST_MAX_SIZE="512M"
+export CLIENT_MAX_BODY_SIZE="512M"
+export PHP_MEMORY_LIMIT="1024M"
+export PHP_MAX_EXECUTION_TIME="300"
+export PHP_MAX_INPUT_TIME="300"
+
+# ------------------------------------------------------------------------------
 # Deployment Directories
 # ------------------------------------------------------------------------------
 export INSTALL_DIR="/opt/schedulr-pro"

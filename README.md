@@ -92,6 +92,15 @@ Hooks (Post)
 Installation Complete
 ```
 
+## Configuration
+
+Upload limits and performance parameters can be tailored for production before installation by modifying `config/config.sh`. The installer automatically configures these across both PHP and Nginx:
+- `UPLOAD_MAX_FILESIZE` (e.g. 512M)
+- `POST_MAX_SIZE`
+- `CLIENT_MAX_BODY_SIZE`
+- `PHP_MEMORY_LIMIT`
+- `PHP_MAX_EXECUTION_TIME`
+
 ## Development Workflow
 
 The installer always installs the latest code from the configured branch (e.g., `main`). There is no Git Tag management required.

@@ -73,6 +73,37 @@ verification_install() {
         fi
     fi
     
+    log_info "Verifying Configuration Limits..."
+    
+    local php_upload
+    php_upload=$(php -i 2>/dev/null | grep -i "^upload_max_filesize" | awk '{print $3}')
+    if [[ "$php_upload" == "$UPLOAD_MAX_FILESIZE" ]]; then
+        log_success "PHP upload_max_filesize = $php_upload"
+    else
+        log_error "PHP upload_max_filesize mismatch (Expected: $UPLOAD_MAX_FILESIZE, Found: $php_upload)"
+        has_error=1
+    fi
+    
+    local php_post
+    php_post=$(php -i 2>/dev/null | grep -i "^post_max_size" | awk '{print $3}')
+    if [[ "$php_post" == "$POST_MAX_SIZE" ]]; then
+        log_success "PHP post_max_size = $php_post"
+    else
+        log_error "PHP post_max_size mismatch (Expected: $POST_MAX_SIZE, Found: $php_post)"
+        has_error=1
+    fi
+    
+    local nginx_client
+    if type nginx &>/dev/null; then
+        nginx_client=$(nginx -T 2>/dev/null | grep -i "client_max_body_size" | head -n1 | awk '{print $2}' | tr -d ';')
+        if [[ "$nginx_client" == "$CLIENT_MAX_BODY_SIZE" ]]; then
+            log_success "Nginx client_max_body_size = $nginx_client"
+        else
+            log_error "Nginx client_max_body_size mismatch (Expected: $CLIENT_MAX_BODY_SIZE, Found: $nginx_client)"
+            has_error=1
+        fi
+    fi
+    
     log_info "Verifying Database Connection..."
     # We verify database connection by running a silent artisan command. 
     # If the app can boot and query the DB, it works.

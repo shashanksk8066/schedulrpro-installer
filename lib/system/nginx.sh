@@ -23,6 +23,7 @@ nginx_install() {
     fi
     
     log_info "Configuring Nginx for domain: ${USER_DOMAIN}"
+    log_info "Updating Nginx upload limits (client_max_body_size = ${CLIENT_MAX_BODY_SIZE})..."
     
     local template_file="${INSTALLER_DIR}/templates/nginx.conf"
     local site_conf="${NGINX_SITES_AVAILABLE}/${USER_DOMAIN}.conf"
@@ -36,6 +37,7 @@ nginx_install() {
     sed -e "s/{{DOMAIN}}/${USER_DOMAIN}/g" \
         -e "s|{{APP_DIR}}|${APP_DIR}|g" \
         -e "s/{{PHP_VERSION}}/${REQUIRED_PHP_VERSION}/g" \
+        -e "s/{{CLIENT_MAX_BODY_SIZE}}/${CLIENT_MAX_BODY_SIZE}/g" \
         "$template_file" > "$site_conf"
         
     # Enable site
@@ -46,6 +48,7 @@ nginx_install() {
     
     # Test and reload
     if nginx -t >/dev/null 2>&1; then
+        log_info "Reloading Nginx..."
         systemctl reload nginx
         systemctl enable nginx
     else
