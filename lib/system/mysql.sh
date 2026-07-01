@@ -19,7 +19,10 @@ mysql_install() {
     export DEBIAN_FRONTEND=noninteractive
     
     log_info "Installing mysql-server..."
-    apt-get install -y mysql-server
+    if ! apt-get install -y mysql-server > /dev/null 2>&1; then
+        log_error "Failed to install MySQL server."
+        exit 2
+    fi
     
     log_info "Securing MySQL and creating database..."
     

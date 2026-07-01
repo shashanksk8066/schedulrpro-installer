@@ -28,6 +28,7 @@ source "${INSTALLER_DIR}/lib/core/report.sh"
 
 # Source System Modules
 source "${INSTALLER_DIR}/lib/system/packages.sh"
+source "${INSTALLER_DIR}/lib/system/node.sh"
 source "${INSTALLER_DIR}/lib/system/php.sh"
 source "${INSTALLER_DIR}/lib/system/composer.sh"
 source "${INSTALLER_DIR}/lib/system/mysql.sh"
@@ -37,6 +38,7 @@ source "${INSTALLER_DIR}/lib/system/ssl.sh"
 
 # Source Application Modules
 source "${INSTALLER_DIR}/lib/application/laravel.sh"
+source "${INSTALLER_DIR}/lib/application/frontend.sh"
 source "${INSTALLER_DIR}/lib/application/permissions.sh"
 source "${INSTALLER_DIR}/lib/application/optimization.sh"
 source "${INSTALLER_DIR}/lib/application/verification.sh"
@@ -114,11 +116,13 @@ main() {
     # Linear Dependency Chain
     local modules=(
         "packages"
+        "node"
         "php"
         "composer"
         "mysql"
         "nginx"
         "laravel"
+        "frontend"
         "supervisor"
         "ssl"
         "permissions"

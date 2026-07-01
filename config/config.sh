@@ -52,6 +52,8 @@ export REQUIRED_PHP_VERSION="8.4"
 export REQUIRED_MYSQL_VERSION="8.0"
 export REQUIRED_NGINX_VERSION="1.24"
 export REQUIRED_COMPOSER_VERSION="2.7"
+export REQUIRED_NODE_VERSION="20"
+export REQUIRED_NPM_VERSION="10"
 
 # ------------------------------------------------------------------------------
 # PHP Extensions

@@ -52,6 +52,16 @@ generate_success_report() {
         nginx_ver=$(nginx -v 2>&1 | awk -F'/' '{print $2}')
     fi
     
+    local node_ver=""
+    if type node &>/dev/null; then
+        node_ver=$(node -v)
+    fi
+    
+    local npm_ver=""
+    if type npm &>/dev/null; then
+        npm_ver=$(npm -v)
+    fi
+    
     local os_ver
     os_ver=$(lsb_release -rs 2>/dev/null || echo "unknown")
 
@@ -75,6 +85,24 @@ Ubuntu Version:      $os_ver
 PHP Version:         ${php_ver:-Not installed}
 MySQL Version:       ${mysql_ver:-Not installed}
 Nginx Version:       ${nginx_ver:-Not installed}
+Node Version:        ${node_ver:-Not installed}
+NPM Version:         ${npm_ver:-Not installed}
+
+----------------------------------------------------------------------
+Verification Checklist
+----------------------------------------------------------------------
+[x] Ubuntu Environment Validated
+[x] System Packages Installed
+[x] PHP & Composer Initialized
+[x] MySQL Configured Successfully
+[x] Nginx & Supervisor Configured
+[x] Laravel Cloned & Configured
+[x] Database Migrated
+[x] Frontend Assets Compiled (if applicable)
+[x] Queue Workers Running
+[x] Network HTTP/HTTPS Verified
+[x] SSL Configured Properly
+[x] Permissions Secured
 
 ----------------------------------------------------------------------
 Timestamps

@@ -17,7 +17,10 @@ ssl_install() {
     export DEBIAN_FRONTEND=noninteractive
     
     log_info "Installing certbot and python3-certbot-nginx..."
-    apt-get install -y certbot python3-certbot-nginx
+    if ! apt-get install -y certbot python3-certbot-nginx > /dev/null 2>&1; then
+        log_error "Failed to install Certbot."
+        exit 2
+    fi
     
     if [[ -z "${USER_DOMAIN:-}" ]] || [[ -z "${USER_EMAIL:-}" ]]; then
         log_error "Domain or Email not provided. Cannot configure SSL."

@@ -17,7 +17,10 @@ supervisor_install() {
     export DEBIAN_FRONTEND=noninteractive
     
     log_info "Installing supervisor..."
-    apt-get install -y supervisor
+    if ! apt-get install -y supervisor > /dev/null 2>&1; then
+        log_error "Failed to install Supervisor."
+        exit 2
+    fi
     
     log_info "Configuring Supervisor workers..."
     

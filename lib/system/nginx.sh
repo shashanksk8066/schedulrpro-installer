@@ -17,7 +17,10 @@ nginx_install() {
     export DEBIAN_FRONTEND=noninteractive
     
     log_info "Installing nginx..."
-    apt-get install -y nginx
+    if ! apt-get install -y nginx > /dev/null 2>&1; then
+        log_error "Failed to install Nginx."
+        exit 2
+    fi
     
     log_info "Configuring Nginx for domain: ${USER_DOMAIN}"
     

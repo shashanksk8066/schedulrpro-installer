@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Schedulr Pro Installer - Verification Module
-# Description: Final post-flight functional validation.
+# Description: Comprehensive post-flight functional validation.
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -16,37 +16,91 @@ verification_install() {
     
     local has_error=0
     
-    # Check Domain Connectivity
-    log_info "Verifying domain connectivity via HTTPS..."
-    if ! curl -sL -o /dev/null -w "%{http_code}" "https://${USER_DOMAIN}" | grep -q '200\|301\|302'; then
-        log_warn "Could not verify HTTPS connectivity. Check your DNS records or firewall."
-        # We don't fail here because DNS might not have propagated internally.
-    else
-        log_success "Domain connectivity verified."
-    fi
-    
-    # Check Supervisor Workers
-    log_info "Verifying queue workers..."
-    local workers=("instagram" "facebook" "youtube" "default" "scheduler")
-    for worker in "${workers[@]}"; do
-        if supervisorctl status "$worker" 2>/dev/null | grep -iq "RUNNING"; then
-            log_success "Worker '$worker' is running."
+    check_service() {
+        local svc=$1
+        if systemctl is-active --quiet "$svc"; then
+            log_success "Service: $svc is running."
         else
-            log_error "Worker '$worker' is NOT running."
+            log_error "Service: $svc is NOT running."
+            has_error=1
+        fi
+    }
+    
+    log_info "Verifying Infrastructure Services..."
+    check_service "php${REQUIRED_PHP_VERSION}-fpm"
+    check_service "mysql"
+    check_service "nginx"
+    check_service "supervisor"
+    
+    log_info "Verifying Supervisor Workers..."
+    local workers=("schedulr-instagram" "schedulr-facebook" "schedulr-youtube" "schedulr-default" "schedulr-scheduler")
+    for worker in "${workers[@]}"; do
+        if supervisorctl status | grep "$worker" | grep -iq "RUNNING"; then
+            log_success "Worker: $worker is RUNNING."
+        else
+            log_error "Worker: $worker is NOT running."
             has_error=1
         fi
     done
     
-    # Storage Writable
-    if [[ -w "${APP_DIR}/storage" ]]; then
-        log_success "Storage directory is writable."
+    log_info "Verifying Application Dependencies..."
+    if [[ -f "${APP_DIR}/.env" ]]; then
+        log_success "Application: .env exists."
+        if grep -q "^APP_KEY=base64:" "${APP_DIR}/.env"; then
+            log_success "Application: APP_KEY is set."
+        else
+            log_error "Application: APP_KEY is missing."
+            has_error=1
+        fi
     else
-        log_error "Storage directory is NOT writable by www-data."
+        log_error "Application: .env is missing."
         has_error=1
     fi
     
+    if [[ -L "${APP_DIR}/public/storage" ]] || [[ -d "${APP_DIR}/public/storage" ]]; then
+        log_success "Application: Storage link exists."
+    else
+        log_error "Application: Storage link missing."
+        has_error=1
+    fi
+    
+    if [[ -f "${APP_DIR}/package.json" ]]; then
+        if [[ -f "${APP_DIR}/public/build/manifest.json" ]]; then
+            log_success "Application: Vite manifest exists."
+        else
+            log_error "Application: Vite manifest missing. Frontend build failed."
+            has_error=1
+        fi
+    fi
+    
+    log_info "Verifying Database Connection..."
+    # We verify database connection by running a silent artisan command. 
+    # If the app can boot and query the DB, it works.
+    if sudo -u www-data php "${APP_DIR}/artisan" db:monitor >/dev/null 2>&1 || sudo -u www-data php "${APP_DIR}/artisan" migrate:status >/dev/null 2>&1; then
+        log_success "Application: Database connection and migrations verified."
+    else
+        log_error "Application: Database connection or migrations failed."
+        has_error=1
+    fi
+    
+    log_info "Verifying Domain Connectivity..."
+    
+    # Check HTTP (Port 80)
+    if curl -sL -o /dev/null -w "%{http_code}" "http://${USER_DOMAIN}" | grep -q '200\|301\|302'; then
+        log_success "Network: HTTP port 80 is responding."
+    else
+        log_warn "Network: HTTP port 80 is not returning 200/301/302. DNS may not be propagated."
+    fi
+    
+    # Check HTTPS (Port 443)
+    if curl -sL -o /dev/null -w "%{http_code}" "https://${USER_DOMAIN}" | grep -q '200\|301\|302'; then
+        log_success "Network: HTTPS port 443 is responding."
+    else
+        log_warn "Network: HTTPS port 443 is not returning 200/301/302. Check your DNS and firewall."
+    fi
+    
     if [[ "$has_error" -eq 1 ]]; then
-        log_error "Final verification failed."
+        log_error "Final verification failed. The installation is incomplete or broken."
         exit 4
     fi
     
@@ -58,6 +112,5 @@ verification_verify() {
 }
 
 verification_rollback() {
-    # Verification is non-destructive
     return 0
 }

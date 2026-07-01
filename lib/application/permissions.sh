@@ -30,6 +30,14 @@ permissions_install() {
     log_info "Securing storage and cache directories..."
     chmod -R ug+rwx "${APP_DIR}/storage" "${APP_DIR}/bootstrap/cache"
     
+    # Create artisan helper
+    log_info "Creating global schedulr helper command..."
+    cat <<EOF > /usr/local/bin/schedulr
+#!/usr/bin/env bash
+sudo -u www-data php "${APP_DIR}/artisan" "\$@"
+EOF
+    chmod +x /usr/local/bin/schedulr
+    
     mark_step_completed "permissions"
 }
 
